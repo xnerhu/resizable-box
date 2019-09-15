@@ -4,19 +4,19 @@ import { IDirection, IPos } from '../interfaces';
 import './style.css';
 
 interface Props {
+  defaultWidth?: number;
   minWidth?: number;
   maxWidth?: number;
   direction?: IDirection;
   children?: any;
 }
 
-export const Resizable = ({ minWidth, maxWidth, direction, children }: Props) => {
+export const Resizable = ({ minWidth, defaultWidth, maxWidth, direction, children }: Props) => {
   const ref = React.useRef<HTMLDivElement>(null);
-  const prevPos = React.useRef<IPos>({ x: 0, y: 0 });
-  const width = React.useRef<number>(256);
+  const startPos = React.useRef<IPos>({ x: 0, y: 0 });
 
   const onMouseDown = (e: React.MouseEvent) => {
-    prevPos.current = {
+    startPos.current = {
       x: e.clientX,
       y: e.clientY,
     }
@@ -31,20 +31,13 @@ export const Resizable = ({ minWidth, maxWidth, direction, children }: Props) =>
   }
 
   const onWindowMouseMove = (e: MouseEvent) => {
-    const delta = e.clientX - prevPos.current.x;
-    const newWidth = direction === 'left' ? width.current - delta : width.current + delta;
+    const width = e.clientX - startPos.current.x + defaultWidth;
 
-    if (newWidth < minWidth || newWidth > maxWidth) {
+    if (width < minWidth || width > maxWidth) {
       return;
     }
 
-    prevPos.current = {
-      x: e.clientX,
-      y: e.clientY,
-    };
-
-    width.current = newWidth;
-    ref.current.style.width = `${newWidth}px`;
+    ref.current.style.width = `${width}px`;
   }
 
   return (
@@ -58,5 +51,7 @@ export const Resizable = ({ minWidth, maxWidth, direction, children }: Props) =>
 }
 
 Resizable.defaultProps = {
-  maxWidth: 512
+  defaultWidth: 256,
+  maxWidth: 512,
+  minWidth: 128,
 }
