@@ -1,7 +1,6 @@
 .resizable {
   width: 256px;
-  height: 512px;
-  background-color: rgba(0, 0, 0, 0.24);
+  height: 256px;
   position: relative;
 }
 
@@ -9,9 +8,4 @@
   width: 4px;
   height: 100%;
   position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
-  cursor: ew-resize;
-  background-color: red;
 }

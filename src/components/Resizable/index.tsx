@@ -1,22 +1,28 @@
 import * as React from 'react';
 
-import { IDirection, IPos } from '../interfaces';
+import { IDirection, IPos } from '../../interfaces';
 import './style.css';
 
 interface Props {
-  defaultWidth?: number;
-  minWidth?: number;
-  maxWidth?: number;
   direction?: IDirection;
+  defaultSize?: number;
+  minSize?: number;
+  maxSize?: number;
+  anchorSize?: number;
   children?: any;
+  style?: React.CSSProperties;
+  anchorStyle?: React.CSSProperties;
 }
 
-export const Resizable = ({ minWidth, defaultWidth, maxWidth, direction, children }: Props) => {
+export const Resizable = ({ minSize, maxSize, direction, anchorSize, defaultSize, children, style, anchorStyle }: Props) => {
+  const vertical = direction === 'top' || direction === 'bottom';
+
   const ref = React.useRef<HTMLDivElement>(null);
-  const startPos = React.useRef<IPos>({ x: 0, y: 0 });
+  const prevPos = React.useRef<IPos>({ x: 0, y: 0 });
+  const size = React.useRef<number>(defaultSize);
 
   const onMouseDown = (e: React.MouseEvent) => {
-    startPos.current = {
+    prevPos.current = {
       x: e.clientX,
       y: e.clientY,
     }
@@ -31,27 +37,54 @@ export const Resizable = ({ minWidth, defaultWidth, maxWidth, direction, childre
   }
 
   const onWindowMouseMove = (e: MouseEvent) => {
-    const width = e.clientX - startPos.current.x + defaultWidth;
+    const delta = vertical ? e.clientY - prevPos.current.y : e.clientX - prevPos.current.x;
+    const newSize = direction === 'left' || direction === 'top' ? size.current - delta : size.current + delta;
 
-    if (width < minWidth || width > maxWidth) {
+    if (newSize < minSize || newSize > maxSize) {
       return;
     }
 
-    ref.current.style.width = `${width}px`;
+    prevPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+    };
+
+    size.current = newSize;
+
+    const style = `${newSize}px`;
+
+    if (vertical) {
+      ref.current.style.height = style;
+    } else {
+      ref.current.style.width = style;
+    }
+  }
+
+  if (defaultSize == null) {
+    React.useEffect(() => {
+      if (size.current == null) {
+        const { clientHeight, clientWidth } = ref.current;
+        size.current = vertical ? clientHeight : clientWidth;
+      }
+    }, [ref]);
   }
 
   return (
-    <div className='resizable' ref={ref}>
+    <div className='resizable' ref={ref} style={{ ...style, [vertical ? 'height' : 'width']: defaultSize }}>
       <div className='resizable-anchor' onMouseDown={onMouseDown} style={{
-        left: direction === 'left' ? 0 : 'unset',
+        ...anchorStyle,
+        width: vertical ? '100%' : anchorSize,
+        height: vertical ? anchorSize : '100%',
+        cursor: vertical ? 'ns-resize' : 'ew-resize',
+        [direction]: 0
       }} />
       {children}
-    </div>
+    </div >
   );
 }
 
 Resizable.defaultProps = {
-  defaultWidth: 256,
-  maxWidth: 512,
-  minWidth: 128,
+  minSize: 0,
+  maxSize: 0,
+  anchorSize: 4,
 }
